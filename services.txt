@@ -1,8 +1,0 @@
-
-
-Client Service : PORT 3001
-Cart Service : PORT 3002
-Product Service : PORT 3003
-Delivery Service : PORT 3004
-Command Service : PORT 3005
-Payment Service : PORT 3006

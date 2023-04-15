@@ -1,7 +1,7 @@
 const amqp = require('amqplib/callback_api')
 const path = require ('path')
 const fs = require('fs')
-const sendMessageToQueue = require('../send');
+const myamqp = require('./myamqp');
 const { PrismaClient } = require('@prisma/client');
 const { ALL } = require('dns');
 
@@ -98,11 +98,11 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
         take: Number(message.limit) || ALL
       })
       ids = ids.map(({ id }) => Number(id))
-      sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds)
+      myamqp.sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds)
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
 
-    
+
     ch1.assertQueue(qImagesRd, { durable: true });
     console.log(`[x] - Created queue ${qImagesRd} .`);
     ch1.consume(qImagesRd, async (msg) => {
@@ -110,7 +110,7 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
       const time = new Date();
       console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qImagesRd}`);
       
-      sendMessageToQueue(adrGateway,{"data":dataTree.Y[1]},qGatewayImages)
+      myamqp.sendMessageToQueue(adrGateway,{"data":dataTree.Y[1]},qGatewayImages)
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
   });

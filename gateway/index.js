@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const swagger = require('../swagger');
+const swagger = require('./swagger');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
@@ -9,8 +9,7 @@ const path = require ('path')
 const swaggerUi = require('swagger-ui-express');
 const jwt = require('jsonwebtoken');
 const favicon = require('serve-favicon');
-const sendMessageToQueue = require('../send')
-const consumeMessagesFromQueue = require('../receive')
+const myamqp = require('./myamqp')
 
 
 
@@ -184,9 +183,9 @@ const adrsProductsService = "amqp://127.0.0.1"
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-  sendMessageToQueue(adrsProductsService,'',"products.images.read")
+  myamqp.sendMessageToQueue(adrsProductsService,'',"products.images.read")
     .then(()=>{
-      consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
+      myamqp.consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
           .then(message => {
             res.send(message)
           })
@@ -205,9 +204,9 @@ app.get('/images',  (req, res) => {
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/ids', async (req, res) => {
-  sendMessageToQueue('amqp://127.0.0.1',{'limit':req.query?.limit},"products.ids.read")
+  myamqp.sendMessageToQueue('amqp://127.0.0.1',{'limit':req.query?.limit},"products.ids.read")
     .then(()=>{
-      consumeMessagesFromQueue('amqp://127.0.0.1', "gateway.ids.read")
+      myamqp.consumeMessagesFromQueue('amqp://127.0.0.1', "gateway.ids.read")
       .then(message => {
         res.send(message)
       })
@@ -592,7 +591,7 @@ app.post('/api/customer/token', async (req, res) => {
 
 ////--------------------------------------------------------------------------------------------------------------------------------
 ////     SWAGGER       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const swaggerDocument = require('../swagger.json');
+const swaggerDocument = require('./swagger.json');
 const { error } = require('console');
 const file = path.join(process.cwd(), './', 'theme-material.css');
 const customCss = fs.readFileSync(file, 'utf8').split('\n').join(' ');

@@ -2,9 +2,9 @@
   "name": "bapzendexpress",
   "version": "1.0.0",
   "description": "",
-  "main": "gateway/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "nodemon gateway/index.js"
+    "start": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
