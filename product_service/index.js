@@ -57,59 +57,65 @@ for (const dt of getData) {
     dataTree[char].push(dt);
   }
 }
+const qIdsRd = 'products.ids.read';
+const qImagesRd = 'products.images.read';
+const rkIdsRd = 'products.read"';
+const rkImagesRd = 'images.read.key'; // use a different routing key here
+const exProducts = 'bapz.products.eu';
+const qGateway = "gateway.ids.read"
 
 
-amqp.connect('amqp://127.0.0.1', (err0, conn) => {
-  // Create channel
-  if (err0) throw err0;
-  conn?.createChannel((err1, ch) => {
-    if (err1) throw err1;
 
-    // Name of the queue
-    const qId = "bapzproductids"
 
-    // Declare the queue
-    ch.assertQueue(qId, { durable: true })
 
-    // Wait for Queue Messages
-    console.log(`AMQP Server listening on queue : ${qId}`)
+// channel.queue_declare(queue='hello') declare queue 
+
+const adrGateway = 'amqp://127.0.0.1'
+
+amqp.connect('amqp://127.0.0.1', (err, conn1) => {
+  if (err) {
+    throw err;
+  }
+
+  conn1.createChannel((err, ch1) => {
+    if (err) {
+      throw err;
+    }
+
+    // ch1.assertExchange(exProducts, 'direct', { durable: true });
+    // ch1.queue_declare(qIdsRd)
+    ch1.assertQueue(qIdsRd, { durable: true });
+    // ch1.assertQueue(qImagesRd, { durable: true });
+    ch1.prefetch(1); // break even distribution in queue , n-inth worker dont consume from n-int queue element
+    // ch1.bindQueue(qIdsRd, exProducts, rkIdsRd);
+    console.log(`[x] - Created queue ${qIdsRd} :`);
     
-    // Define topic and routing key
-    const topic = 'products';
-    const routingKey = 'bapz.*';
+    ch1.consume(qIdsRd, async (msg) => {
+      const message = JSON.parse(msg.content.toString())
+      console.log(`[x] - Received ${msg.content.toString()} from q : ${qIdsRd}`);
+      let ids = await prisma.bapz.findMany({
+        select:{
+          id:true,
+        },
+        take: Number(message.limit) || ALL
+      })
+      ids = ids.map(({ id }) => Number(id))
+      sendMessageToQueue(adrGateway,{"data":ids},qGateway)
+      ch1.ack(msg); // msg was processed and can be removed from queue
+    }, { noAck: false });
 
-    // Assert exchange and bind queue
-    ch.assertExchange(topic, 'topic', { durable: true });
-    ch.bindQueue(qId, topic, routingKey);
 
-    ch.consume(qId, async (msg) => {
-      const message = JSON.parse(msg.content.toString('utf8'));
-      const time = new Date();
-      console.log(`[x] - ${time.getSeconds()} - Product Server Received message in Queue ${qId}, Topic ${topic}, Routing Key ${msg.fields.routingKey}`);
+    ch1.assertQueue(qImagesRd, { durable: true });
+    console.log(`[x] - Created queue ${qImagesRd} .`);
+    ch1.consume(qImagesRd, async (msg) => {
+      const message = JSON.parse(msg.content.toString())
+      console.log(`[x] - Received ${msg.content.toString()} from q : ${qImagesRd}`);
+      
+      sendMessageToQueue(adrGateway,{"data":ids},qGateway)
+      ch1.ack(msg); // msg was processed and can be removed from queue
+    }, { noAck: false });
+  });
+});
 
-      if (message.url === '/images') {
-        sendMessageToQueue('amqp://127.0.0.1', { 'data': dataTree }, 'bapzgateway')
-          .catch((error) => {
-            console.error(`Error sending messages to queue bapzgateway:`, error);
-          })
-      } else if (message.url === '/ids') {
-        const products = await prisma.bapz.findMany({
-          take: Number(message?.limit) || ALL,
-          select: {
-            id: true,
-          }
-        });
-        let idiz = []
-        for (const product of products)
-          idiz.push(product.id.toString())
-        sendMessageToQueue('amqp://127.0.0.1', { 'data': idiz }, 'bapzgateway')
-          .catch((error) => {
-            console.error(`Error sending messages to queue bapzgateway:`, error);
-          })
-      }
-    }, { noAck: true })
-
-  })
-})
 
 

@@ -207,9 +207,9 @@ const sendToQueue = (msg,q) => {
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-  sendMessageTo('amqp://127.0.0.1',{'url':'/images'},"bapz.products.eu","products.read","images.read")
+  sendMessageToQueue('amqp://127.0.0.1',{'url':'/images'},"products.images.read")
     .then(()=>{
-      consumeMessageFrom('amqp://127.0.0.1',"products.eu","products.read","images.read")
+      consumeMessagesFromQueue('amqp://127.0.0.1',"gateway.images.read")
           .then(message => {
             res.send(message)
           })
@@ -228,9 +228,9 @@ app.get('/images',  (req, res) => {
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/ids', async (req, res) => {
-  sendMessageToQueue('amqp://127.0.0.1',{'url':'/ids','limit':req.query?.limit},"bapzproductids")
+  sendMessageToQueue('amqp://127.0.0.1',{'limit':req.query?.limit},"products.ids.read")
     .then(()=>{
-      consumeMessagesFromQueue("bapzgateway")
+      consumeMessagesFromQueue('amqp://127.0.0.1', "gateway.ids.read")
       .then(message => {
         res.send(message)
       })

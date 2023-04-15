@@ -1,9 +1,9 @@
 const amqp = require('amqplib/callback_api')
 
 
-function consumeMessagesFromQueue(q) {
+function consumeMessagesFromQueue(adr,q) {
   return new Promise((resolve, reject) => {
-    amqp.connect('amqp://127.0.0.1', (err0, conn) => {
+    amqp.connect(adr, (err0, conn) => {
       if (err0) return reject(err0);
 
       conn.createChannel((err1, ch) => {
@@ -15,7 +15,7 @@ function consumeMessagesFromQueue(q) {
         ch.consume(q, msg => {
           const message = JSON.parse(msg.content.toString('utf8'));
           const time = new Date();
-          console.log(`[x] - ${time.getSeconds()} - Consuming messages from : ${q}`);
+          console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q : ${q}`);
           resolve(message);
         }, { noAck: true });
 
@@ -35,12 +35,11 @@ const consumeMessageFrom = (adr,topic, routingKey, queue) => {
       conn.createChannel((err1, ch) => {
         if (err1) return reject(err1);
 
-        ch.assertExchange(topic, 'topic', { durable: true });
+        // ch.assertExchange(topic, 'direct', { durable: true });
 
         ch.assertQueue(queue, { durable: true });
 
-        ch.bindQueue(queue, topic, routingKey);
-
+        // ch.bindQueue(queue, topic, routingKey);
         ch.consume(queue, msg => {
           const message = JSON.parse(msg.content.toString('utf8'));
           const time = new Date();

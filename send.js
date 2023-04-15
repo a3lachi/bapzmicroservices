@@ -15,10 +15,12 @@ const sendMessageToQueue = async (adr,msg, q) => {
         }
         ch.assertQueue(q, { durable: true })
 
-        ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)))
+        ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)), {
+          persistent: true
+        })
 
         const time = new Date()
-        console.log(`[x] - ${time.getSeconds()} - Sent message to Queue : ${q}`)
+        console.log(`[x] - ${time.getSeconds()} - Sent ${JSON.stringify(msg)} to q : ${q}`)
 
         setTimeout(() => {
           conn.close()
@@ -31,7 +33,7 @@ const sendMessageToQueue = async (adr,msg, q) => {
 
 // Create connection
 // routingKey : region.us-east, order.created, or customer.deleted.
-const sendMessageTo = async (adr, msg, topic, routingKey, queue) => {
+const sendMessageTo = async (adr, msg, exchange, routingKey, queue) => {
   return new Promise((resolve, reject) => {
     amqp.connect(adr, (err0, conn) => {
       if (err0) {
@@ -43,17 +45,16 @@ const sendMessageTo = async (adr, msg, topic, routingKey, queue) => {
           reject(err1)
           return
         }
-        ch.assertExchange(topic, 'topic', { durable: true })
+        ch.assertExchange(exchange, 'direct', { durable: true })
 
-        if (queue) {
-          ch.assertQueue(queue, { durable: true })
-          ch.bindQueue(queue, topic, routingKey)
-        }
+        ch.assertQueue(queue, { durable: true })
+        ch.bindQueue(queue, exchange, routingKey)
+        
 
-        ch.publish(topic, routingKey, Buffer.from(JSON.stringify(msg)))
+        ch.publish(exchange, routingKey, Buffer.from(JSON.stringify(msg)))
 
         const time = new Date()
-        console.log(`[x] - ${time.getSeconds()} - Sent message to topic: ${topic}, routing key: ${routingKey}`)
+        console.log(`[x] - ${time.getSeconds()} - Sent message to exchange: ${exchange}, routing key: ${routingKey}`)
 
         setTimeout(() => {
           conn.close()
