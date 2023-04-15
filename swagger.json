@@ -1,0 +1,284 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "title": "Bapz Backend API",
+      "version": "1.0.0",
+      "description": "Bapz Store Backend Swagger. This backend is written in Express JS."
+    },
+    "basePath": "/",
+    "schemes": [
+      "http"
+    ],
+    "consumes": [
+      "application/json"
+    ],
+    "produces": [
+      "application/json"
+    ],
+    "paths": {
+      "/": {
+        "get": {
+          "tags": [
+            "Bapz"
+          ],
+          "summary": "API Swagger",
+          "responses": {
+            "200": {
+              "description": "Swagger of the API"
+            },
+            "400": {
+              "description": "Server down"
+            }
+          }
+        }
+      },
+      "/api/customer": {
+        "post": {
+          "tags": [
+            "Customer"
+          ],
+          "summary": "Login/Register a user",
+          "description": "Check if the user exist in database",
+          "parameters": [
+            {
+              "name": "data",
+              "in": "body",
+              "description": "User Email",
+              "required": ["email","pwd"],
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "default":"osirusjack@667.io"
+                  },
+                  "pwd": {
+                    "type": "string",
+                    "default":"Azerty67890"
+                  },
+                  "frstname": {
+                    "type": "string",
+                    "default":"Frstname"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Image uploaded successfully"
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/api/customer/commands": {
+        "post": {
+          "tags": [
+            "Customer"
+          ],
+          "summary": "Update a customer commands.",
+          "description": "After a payment success",
+          "parameters": [
+            {
+              "name": "data",
+              "in": "body",
+              "description": "User Email",
+              "required": ["email","pwd"],
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jwt": {
+                    "type": "string",
+                    "default":"SFDGR35AESDFJHHFGHDF"
+                  },
+                  "cmds": {
+                    "type": "string",
+                    "default":"//Army Green,S,1,895@Navy Blue,S,1,1045@Brown,S,1,1070@Army Green,S,1,742@|26/3/2023|11 rue de médecis, clermont ferrand 63000//Grey,M,2,805@Black,S,1,769@Black,S,1,1029@|26/3/2023|11 rue de médecis, clermont ferrand 63000//Light Blue,S,1,752@Caise,S,1,756@|26/3/2023|11 rue de médecis, clermont ferrand 63000"
+                  },
+                  "date": {
+                    "type": "string",
+                    "default":"26/3/2023"
+                  },
+                  "adrs": {
+                    "type": "string",
+                    "default":"11 rue de médecis, clermont ferrand 63000"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Image uploaded successfully"
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/images": {
+        "get": {
+          "tags": [
+            "Bapz"
+          ],
+          "summary": "Retrieve all images",
+          "description": "Get mapping of all images names and corresponding src files.",
+          "responses": {
+            "200": {
+              "description": "Data ready."
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/api/bapz/product": {
+        "post": {
+          "tags": [
+            "Bapz"
+          ],
+          "summary": "Retrieve a product by id",
+          "description": "Get all the necessary informations about a product form his unique ID",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "body",
+              "description": "The ID of the product",
+              "required": true,
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "default":740
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Data ready."
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/api/bapz/apparel": {
+        "post": {
+          "tags": [
+            "Bapz"
+          ],
+          "summary": "Retrieve all images by category",
+          "description": "Get mapping of all images data by category.If cat is not specified it will return 2 products of each categry",
+          "parameters": [
+            {
+              "name": "cat",
+              "in": "body",
+              "description": "The category of products",
+              "required": true,
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cat": {
+                    "type": "string",
+                    "default":"hats"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Data ready."
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/api/customer/token": {
+        "post": {
+          "tags": [
+            "Customer"
+          ],
+          "summary": "Get users commands",
+          "description": "Get users commands",
+          "parameters": [
+            {
+              "name": "jwt",
+              "in": "body",
+              "description": "JASON Web Token",
+              "required": true,
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jwt": {
+                    "type": "string",
+                    "default":"eyJhbGciOiJIUzI1NiJ9.YmlnZnJlZXplQGhvdG1haWwuZnJXZWQgQXByIDA1IDIwMjMgMDc6NTg6NDYgR01UKzAwMDAgKENvb3JkaW5hdGVkIFVuaXZlcnNhbCBUaW1lKQ.qaF_musGQgutStrQ-Eryk7Loc82jgkCAqDxxp3zZY34"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Data ready."
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      },
+      "/ids": {
+        "get": {
+          "tags": [
+            "Bapz"
+          ],
+          "summary": "Retrieve IDs",
+          "description": "Get all product's ids",
+          "parameters": [
+            {
+              "name": "limit",
+              "in": "body",
+              "description": "Maximum results returned",
+              "required": false,
+              "type": "object",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "limit": {
+                    "type": "integer",
+                    "default": "10"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "IDs ready."
+            },
+            "400": {
+              "description": "Invalid request data"
+            }
+          }
+        }
+      }
+    }
+  }
+  
