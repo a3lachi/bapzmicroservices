@@ -1,8 +1,7 @@
 #!/bin/bash
 
-if [ "$1" == "start" ]; then
+if [ "$1" == "-s" ]; then
   osascript -e 'tell app "Terminal"
-       
     set input to "\"\\033]0;CART\\007\""
     set newWindow to do script "echo -n -e " & input & " && cd $(pwd)/bapzendservices/cart_service && clear && ns;"
     set bounds of window 2 to {0, 400, 800, 700} 
@@ -29,7 +28,11 @@ if [ "$1" == "start" ]; then
 fi
 
 
-if [ "$1" == "end" ]; then
+if [ "$1" == "-e" ]; then
   kill -9 $(lsof -i :3000 | grep LISTEN | awk '{print $2}')
 
+fi
+
+if [ "$1" == "-c" ]; then
+  for (( i=1; i<=$2; i++ )); do curl 'http://127.0.0.1:3000/ids?limit='$3 && sleep 0.5 && echo '' && curl 'http://127.0.0.1:3000/images'&& sleep 0.5 && echo '' ; done;
 fi

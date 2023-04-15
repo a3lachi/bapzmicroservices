@@ -183,7 +183,7 @@ const adrsProductsService = "amqp://127.0.0.1"
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-  myamqp.sendMessageToQueue(adrsProductsService,'',"products.images.read")
+  myamqp.sendMessageToQueue(adrsProductsService,{},"products.images.read")
     .then(()=>{
       myamqp.consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
           .then(message => {

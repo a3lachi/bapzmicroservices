@@ -86,11 +86,13 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
     }
     ch1.prefetch(1); // break even distribution in queue , n-inth worker dont consume from n-int queue element
 
+    // Queue products.ids.read
     ch1.assertQueue(qIdsRd, { durable: true });
     console.log(`[x] - Created queue ${qIdsRd} :`);
     ch1.consume(qIdsRd, async (msg) => {
       const message = JSON.parse(msg.content.toString())
-      console.log(`[x] - Received ${msg.content.toString()} from q : ${qIdsRd}`);
+      const time = new Date();
+      console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qIdsRd}`);
       let ids = await prisma.bapz.findMany({
         select:{
           id:true,
@@ -102,11 +104,10 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
 
-
+    // Queue products.images.read
     ch1.assertQueue(qImagesRd, { durable: true });
     console.log(`[x] - Created queue ${qImagesRd} .`);
     ch1.consume(qImagesRd, async (msg) => {
-      const message = JSON.parse(msg.content.toString())
       const time = new Date();
       console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qImagesRd}`);
       
