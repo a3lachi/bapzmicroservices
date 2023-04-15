@@ -207,7 +207,7 @@ const sendToQueue = (msg,q) => {
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-  sendMessageTo('amqp://127.0.0.1',{'url':'/images'},"products.eu","products.read","images.read")
+  sendMessageTo('amqp://127.0.0.1',{'url':'/images'},"bapz.products.eu","products.read","images.read")
     .then(()=>{
       consumeMessageFrom('amqp://127.0.0.1',"products.eu","products.read","images.read")
           .then(message => {

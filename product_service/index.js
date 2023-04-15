@@ -60,86 +60,56 @@ for (const dt of getData) {
 
 
 amqp.connect('amqp://127.0.0.1', (err0, conn) => {
-  
   // Create channel
   if (err0) throw err0;
   conn?.createChannel((err1, ch) => {
-    if(err1) throw err1 ;
+    if (err1) throw err1;
+
     // Name of the queue
     const qId = "bapzproductids"
+
     // Declare the queue
     ch.assertQueue(qId, { durable: true })
 
     // Wait for Queue Messages
     console.log(`AMQP Server listening on queue : ${qId}`)
-    ch.consume( qId, async (msg) => {
+    
+    // Define topic and routing key
+    const topic = 'products';
+    const routingKey = 'bapz.*';
 
-        const message = JSON.parse(msg.content.toString('utf8'))
+    // Assert exchange and bind queue
+    ch.assertExchange(topic, 'topic', { durable: true });
+    ch.bindQueue(qId, topic, routingKey);
 
-        const time = new Date()
-        console.log(`[x] - ${time.getSeconds()} - Product Server Received message in Queue ${qId}`)
+    ch.consume(qId, async (msg) => {
+      const message = JSON.parse(msg.content.toString('utf8'));
+      const time = new Date();
+      console.log(`[x] - ${time.getSeconds()} - Product Server Received message in Queue ${qId}, Topic ${topic}, Routing Key ${msg.fields.routingKey}`);
 
+      if (message.url === '/images') {
+        sendMessageToQueue('amqp://127.0.0.1', { 'data': dataTree }, 'bapzgateway')
+          .catch((error) => {
+            console.error(`Error sending messages to queue bapzgateway:`, error);
+          })
+      } else if (message.url === '/ids') {
+        const products = await prisma.bapz.findMany({
+          take: Number(message?.limit) || ALL,
+          select: {
+            id: true,
+          }
+        });
+        let idiz = []
+        for (const product of products)
+          idiz.push(product.id.toString())
+        sendMessageToQueue('amqp://127.0.0.1', { 'data': idiz }, 'bapzgateway')
+          .catch((error) => {
+            console.error(`Error sending messages to queue bapzgateway:`, error);
+          })
+      }
+    }, { noAck: true })
 
-
-        if (message.url === '/images') {
-          sendMessageToQueue('amqp://127.0.0.1',{'data':dataTree},'bapzgateway')
-            .catch((error)=>{
-              console.error(`Error sending messages to queue bapzgateway :`, error);
-            })
-        }
-        else if (message.url === '/ids') {
-          const products = await prisma.bapz.findMany({
-            take: Number(message?.limit) || ALL,
-            select: {
-              id: true,
-            }
-          });
-          let idiz = []
-          for (const product of products)
-            idiz.push(product.id.toString())
-            sendMessageToQueue('amqp://127.0.0.1',{'data':idiz},'bapzgateway')
-            .catch((error)=>{
-              console.error(`Error sending messages to queue bapzgateway :`, error);
-            })          
-          
-        
-        }
-      }, { noAck: true })
-    // Wait for Queue Messages
-    console.log(`AMQP Server listening on queue : ${qId}`)
-    ch.consume( qId, async (msg) => {
-
-        const message = JSON.parse(msg.content.toString('utf8'))
-
-        const time = new Date()
-        console.log(`[x] - ${time.getSeconds()} - Product Server Received message in Queue ${qId}`)
-
-
-
-        if (message.url === '/images') {
-          sendMessageToQueue('amqp://127.0.0.1',{'data':dataTree},'bapzgateway')
-            .catch((error)=>{
-              console.error(`Error sending messages to queue bapzgateway :`, error);
-            })
-        }
-        else if (message.url === '/ids') {
-          const products = await prisma.bapz.findMany({
-            take: Number(message?.limit) || ALL,
-            select: {
-              id: true,
-            }
-          });
-          let idiz = []
-          for (const product of products)
-            idiz.push(product.id.toString())
-            sendMessageToQueue('amqp://127.0.0.1',{'data':idiz},'bapzgateway')
-            .catch((error)=>{
-              console.error(`Error sending messages to queue bapzgateway :`, error);
-            })          
-          
-        
-        }
-      }, { noAck: true })
   })
 })
+
 
