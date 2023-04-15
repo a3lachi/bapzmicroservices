@@ -62,7 +62,8 @@ const qImagesRd = 'products.images.read';
 const rkIdsRd = 'products.read"';
 const rkImagesRd = 'images.read.key'; // use a different routing key here
 const exProducts = 'bapz.products.eu';
-const qGateway = "gateway.ids.read"
+const qGatewayIds = "gateway.ids.read"
+const qGatewayImages = "gateway.images.read"
 
 
 
@@ -76,20 +77,17 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
   if (err) {
     throw err;
   }
+  console.log(`AQMP Server listening..`);
+
 
   conn1.createChannel((err, ch1) => {
     if (err) {
       throw err;
     }
-
-    // ch1.assertExchange(exProducts, 'direct', { durable: true });
-    // ch1.queue_declare(qIdsRd)
-    ch1.assertQueue(qIdsRd, { durable: true });
-    // ch1.assertQueue(qImagesRd, { durable: true });
     ch1.prefetch(1); // break even distribution in queue , n-inth worker dont consume from n-int queue element
-    // ch1.bindQueue(qIdsRd, exProducts, rkIdsRd);
+
+    ch1.assertQueue(qIdsRd, { durable: true });
     console.log(`[x] - Created queue ${qIdsRd} :`);
-    
     ch1.consume(qIdsRd, async (msg) => {
       const message = JSON.parse(msg.content.toString())
       console.log(`[x] - Received ${msg.content.toString()} from q : ${qIdsRd}`);
@@ -100,18 +98,19 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
         take: Number(message.limit) || ALL
       })
       ids = ids.map(({ id }) => Number(id))
-      sendMessageToQueue(adrGateway,{"data":ids},qGateway)
+      sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds)
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
 
-
+    
     ch1.assertQueue(qImagesRd, { durable: true });
     console.log(`[x] - Created queue ${qImagesRd} .`);
     ch1.consume(qImagesRd, async (msg) => {
       const message = JSON.parse(msg.content.toString())
-      console.log(`[x] - Received ${msg.content.toString()} from q : ${qImagesRd}`);
+      const time = new Date();
+      console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qImagesRd}`);
       
-      sendMessageToQueue(adrGateway,{"data":ids},qGateway)
+      sendMessageToQueue(adrGateway,{"data":dataTree.Y[1]},qGatewayImages)
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
   });

@@ -180,36 +180,13 @@ const araJSON = (bigint) => {
 // });
 // ///////////////////////////////////////////////////////////////
 
-const amqp = require('amqplib/callback_api')
-
-// Create connection
-const sendToQueue = (msg,q) => {
-  amqp.connect('amqp://127.0.0.1', (err0, conn) => {
-    if (err0) throw err0;
-    // Create channel
-    conn.createChannel((err1, ch) => {
-      if (err1) throw err1;
-      // Declare the queue
-      ch.assertQueue(q, { durable: true })
-
-      // Send message to the queue
-      ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)))
-      console.log(`Sent : ${JSON.stringify(msg)} - Queue : ${q}`)
-
-      // Close the connection and exit
-      setTimeout(() => {
-        conn.close()
-        process.exit(0)
-      }, 500)
-    })
-  })
-}
+const adrsProductsService = "amqp://127.0.0.1" 
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-  sendMessageToQueue('amqp://127.0.0.1',{'url':'/images'},"products.images.read")
+  sendMessageToQueue(adrsProductsService,'',"products.images.read")
     .then(()=>{
-      consumeMessagesFromQueue('amqp://127.0.0.1',"gateway.images.read")
+      consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
           .then(message => {
             res.send(message)
           })
