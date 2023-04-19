@@ -34,5 +34,5 @@ if [ "$1" == "-e" ]; then
 fi
 
 if [ "$1" == "-c" ]; then
-  for (( i=1; i<=$2; i++ )); do curl 'http://127.0.0.1:3000/ids?limit='$3 && sleep 0.5 && echo '' && curl 'http://127.0.0.1:3000/images'&& sleep 0.5 && echo '' ; done;
+  for (( i=1; i<=$2; i++ )); do curl 'http://127.0.0.1:3000/ids?limit='$3 && echo '' && curl 'http://127.0.0.1:3000/images' && echo '' ; done;
 fi

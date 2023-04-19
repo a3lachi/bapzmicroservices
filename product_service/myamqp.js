@@ -1,7 +1,8 @@
 const amqp = require('amqplib/callback_api')
 
 
-const sendMessageToQueue = async (adr,msg, q) => {
+
+const sendMessageToQueue = async (adr, msg, q, corrId) => {
   return new Promise((resolve, reject) => {
     amqp.connect(adr, (err0, conn) => {
       if (err0) {
@@ -15,9 +16,12 @@ const sendMessageToQueue = async (adr,msg, q) => {
         }
         ch.assertQueue(q, { durable: true })
 
+        const myHeaders = { 'correlationId':corrId };
+
         ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)), {
-          persistent: true
-        })
+          persistent: true,
+          headers:{myH:myHeaders}
+        });
 
         const time = new Date()
         console.log(`[x] - ${time.getSeconds()} - Sent ${JSON.stringify(msg)} to q:${q}`)

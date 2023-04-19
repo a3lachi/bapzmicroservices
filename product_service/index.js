@@ -91,6 +91,9 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
     console.log(`[x] - Created queue ${qIdsRd} :`);
     ch1.consume(qIdsRd, async (msg) => {
       const message = JSON.parse(msg.content.toString())
+      const headers = msg.properties.headers;
+      const correlationId = headers.myH.correlationId
+      console.log('Server received header :',correlationId)
       const time = new Date();
       console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qIdsRd}`);
       let ids = await prisma.bapz.findMany({
@@ -100,7 +103,7 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
         take: Number(message.limit) || ALL
       })
       ids = ids.map(({ id }) => Number(id))
-      myamqp.sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds)
+      myamqp.sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds,correlationId)
       ch1.ack(msg); // msg was processed and can be removed from queue
     }, { noAck: false });
 

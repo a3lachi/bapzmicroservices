@@ -10,12 +10,8 @@ const prisma = new PrismaClient();
 
 
 const qIdsRd = 'client.login.read';
-const qImagesRd = 'products.images.read';
-const rkIdsRd = 'products.read"';
-const rkImagesRd = 'images.read.key'; // use a different routing key here
-const exProducts = 'bapz.products.eu';
+
 const qGatewayIds = "gateway.ids.read"
-const qGatewayImages = "gateway.images.read"
 
 
 

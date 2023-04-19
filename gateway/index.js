@@ -179,10 +179,12 @@ const araJSON = (bigint) => {
 // });
 // ///////////////////////////////////////////////////////////////
 
-const adrsProductsService = "amqp://127.0.0.1" 
+const adrsProductsService = "amqp://127.0.0.1"
+const adrsProductsClient = "amqp://127.0.0.1" 
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
+
   myamqp.sendMessageToQueue(adrsProductsService,{},"products.images.read")
     .then(()=>{
       myamqp.consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
@@ -200,13 +202,16 @@ app.get('/images',  (req, res) => {
     })
 });
 // ///////////////////////////////////////////////////////////////
+const { v4: uuidv4 } = require('uuid');
 
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/ids', async (req, res) => {
-  myamqp.sendMessageToQueue('amqp://127.0.0.1',{'limit':req.query?.limit},"products.ids.read")
+  const correlationId = uuidv4();
+  console.log('Sending CID :',correlationId)
+  myamqp.sendMessageToQueue(adrsProductsService,{'limit':req.query?.limit},"products.ids.read",correlationId)
     .then(()=>{
-      myamqp.consumeMessagesFromQueue('amqp://127.0.0.1', "gateway.ids.read")
+      myamqp.consumeMessagesFromQueue(adrsProductsService, "gateway.ids.read",correlationId)
       .then(message => {
         res.send(message)
       })

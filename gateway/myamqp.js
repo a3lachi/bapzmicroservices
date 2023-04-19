@@ -1,7 +1,10 @@
 const amqp = require('amqplib/callback_api')
+const { v4: uuidv4 } = require('uuid');
 
 
-const consumeMessagesFromQueue = (adr,q) => {
+
+
+const consumeMessagesFromQueue = (adr, q, correlationId) => {
   return new Promise((resolve, reject) => {
     amqp.connect(adr, (err0, conn) => {
       if (err0) return reject(err0);
@@ -10,13 +13,19 @@ const consumeMessagesFromQueue = (adr,q) => {
         if (err1) return reject(err1);
 
         ch.assertQueue(q, { durable: true });
-        
+
 
         ch.consume(q, msg => {
           const message = JSON.parse(msg.content.toString('utf8'));
-          const time = new Date();
-          console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q : ${q}`);
-          resolve(message);
+          const headers = msg.properties.headers;
+          const msgCorrId = headers.myH.correlationId
+          console.log('[x] - Msg correlationId :',msgCorrId)
+          console.log('[x] - Wanted correlationId :',correlationId)
+          if (msgCorrId === correlationId) {
+            const time = new Date();
+            console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q : ${q}`);
+            resolve(message);
+          }
         }, { noAck: true });
 
         setTimeout(() => {
@@ -25,10 +34,10 @@ const consumeMessagesFromQueue = (adr,q) => {
       });
     });
   });
-}
+};
 
 
-const sendMessageToQueue = async (adr,msg, q) => {
+const sendMessageToQueue = async (adr, msg, q, corrId) => {
   return new Promise((resolve, reject) => {
     amqp.connect(adr, (err0, conn) => {
       if (err0) {
@@ -41,10 +50,13 @@ const sendMessageToQueue = async (adr,msg, q) => {
           return
         }
         ch.assertQueue(q, { durable: true })
+        console.log('------',corrId)
+        const myHeaders = { 'correlationId':corrId };
 
         ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)), {
-          persistent: true
-        })
+          persistent: true,
+          headers:{myH:myHeaders}
+        });
 
         const time = new Date()
         console.log(`[x] - ${time.getSeconds()} - Sent ${JSON.stringify(msg)} to q:${q}`)
@@ -57,8 +69,6 @@ const sendMessageToQueue = async (adr,msg, q) => {
     })
   })
 }
-
-
 
 module.exports = {
   sendMessageToQueue,
