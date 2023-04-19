@@ -6,7 +6,7 @@ import sys
 url = "http://localhost:3000"
 data_user = { 'email':'aa@a',
        'pwd':'a',
-            #   'firstname': 'mlkli7',
+               'firstname': 'mlkli7',
             #   'lastname': 'boko',
             #   'username':'fara',
             #   'jwt':'DSFDGSDFHR78568756756' 
