@@ -208,7 +208,6 @@ const { v4: uuidv4 } = require('uuid');
 ////    GET     ///////////////////////////////////////////////////
 app.get('/ids', async (req, res) => {
   const correlationId = uuidv4();
-  console.log('Sending CID :',correlationId)
   myamqp.sendMessageToQueue(adrsProductsService,{'limit':req.query?.limit},"products.ids.read",correlationId)
     .then(()=>{
       myamqp.consumeMessagesFromQueue(adrsProductsService, "gateway.ids.read",correlationId)

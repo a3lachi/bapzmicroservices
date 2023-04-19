@@ -104,7 +104,7 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
       })
       ids = ids.map(({ id }) => Number(id))
       myamqp.sendMessageToQueue(adrGateway,{"data":ids},qGatewayIds,correlationId)
-      ch1.ack(msg); // msg was processed and can be removed from queue
+      ch1.ack(msg); 
     }, { noAck: false });
 
     // Queue products.images.read
@@ -115,7 +115,7 @@ amqp.connect('amqp://127.0.0.1', (err, conn1) => {
       console.log(`[x] - ${time.getSeconds()} - Received ${msg.content.toString()} from q : ${qImagesRd}`);
       
       myamqp.sendMessageToQueue(adrGateway,{"data":dataTree.Y[1]},qGatewayImages)
-      ch1.ack(msg); // msg was processed and can be removed from queue
+      ch1.ack(msg);
     }, { noAck: false });
   });
 });

@@ -16,17 +16,20 @@ const consumeMessagesFromQueue = (adr, q, correlationId) => {
 
 
         ch.consume(q, msg => {
-          const message = JSON.parse(msg.content.toString('utf8'));
-          const headers = msg.properties.headers;
-          const msgCorrId = headers.myH.correlationId
-          console.log('[x] - Msg correlationId :',msgCorrId)
-          console.log('[x] - Wanted correlationId :',correlationId)
+          const msgCorrId = msg.properties.headers.myH.correlationId
+          // console.log('[x] - Msg fields :',msg.fields)
+          // console.log('[x] - Msg correlationId :',msgCorrId)
+          // console.log('[x] - Wanted correlationId :',correlationId)
           if (msgCorrId === correlationId) {
             const time = new Date();
             console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q : ${q}`);
-            resolve(message);
+            resolve(msg.content);
+            ch.cancel(msg.fields.consumerTag);
+            ch.ack(msg);
           }
-        }, { noAck: true });
+          else
+            console.log('Unhandled message!',msgCorrId)
+        }, { noAck: false });
 
         setTimeout(() => {
           conn.close();
@@ -50,13 +53,25 @@ const sendMessageToQueue = async (adr, msg, q, corrId) => {
           return
         }
         ch.assertQueue(q, { durable: true })
-        console.log('------',corrId)
         const myHeaders = { 'correlationId':corrId };
 
         ch.sendToQueue(q, new Buffer.from(JSON.stringify(msg)), {
           persistent: true,
           headers:{myH:myHeaders}
         });
+
+        // ch.sendToQueue(q, new Buffer.from(JSON.stringify({'info':'rrr1'})), {
+        //   persistent: true,
+        //   headers:{myH:myHeaders}
+        // });
+        // ch.sendToQueue(q, new Buffer.from(JSON.stringify({'info':'rrr2'})), {
+        //   persistent: true,
+        //   headers:{myH:myHeaders}
+        // });
+        // ch.sendToQueue(q, new Buffer.from(JSON.stringify({'info':'rrr3'})), {
+        //   persistent: true,
+        //   headers:{myH:myHeaders}
+        // });
 
         const time = new Date()
         console.log(`[x] - ${time.getSeconds()} - Sent ${JSON.stringify(msg)} to q:${q}`)
