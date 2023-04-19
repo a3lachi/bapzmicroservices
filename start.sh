@@ -27,12 +27,3 @@ if [ "$1" == "-s" ]; then
   end tell'
 fi
 
-
-if [ "$1" == "-e" ]; then
-  kill -9 $(lsof -i :3000 | grep LISTEN | awk '{print $2}')
-
-fi
-
-if [ "$1" == "-c" ]; then
-  for (( i=1; i<=$2; i++ )); do curl 'http://127.0.0.1:3000/ids?limit='$3 && echo '' && curl 'http://127.0.0.1:3000/images' && echo '' ; done;
-fi
