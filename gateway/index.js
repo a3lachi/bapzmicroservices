@@ -1,3 +1,5 @@
+
+const axios = require('axios')
 const express = require('express');
 const cors = require('cors');
 const swagger = require('./swagger');
@@ -9,7 +11,6 @@ const path = require ('path')
 const swaggerUi = require('swagger-ui-express');
 const jwt = require('jsonwebtoken');
 const favicon = require('serve-favicon');
-const myamqp = require('./myamqp')
 
 
 
@@ -179,50 +180,25 @@ const araJSON = (bigint) => {
 // });
 // ///////////////////////////////////////////////////////////////
 
-const adrsProductsService = "amqp://127.0.0.1"
+const adrsProductsService = "http://127.0.0.1:3001"
 const adrsProductsClient = "amqp://127.0.0.1" 
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/images',  (req, res) => {
-
-  myamqp.sendMessageToQueue(adrsProductsService,{},"products.images.read")
-    .then(()=>{
-      myamqp.consumeMessagesFromQueue(adrsProductsService,"gateway.images.read")
-          .then(message => {
-            res.send(message)
-          })
-          .catch(error => {
-            console.error('Error consuming messages from queue bapzgateway :', error);
-            res.status(400).json({ data: 0 });
-          });
-    })
-    .catch((error)=>{
-      console.error('Error sending messages to queue bapzproduct :', error);
-      res.status(400).json({ data: 0 });
-    })
+  axios.get(`${adrsProductsService}/images?letter=${req.query?.letter}&limit=${req.query?.limit}`)
+  .then(resu=>{res.send(resu.data)})
+  .catch(()=>{res.status(400).json({ 'info': 'products service error response' });})
 });
 // ///////////////////////////////////////////////////////////////
-const { v4: uuidv4 } = require('uuid');
+
+
 
 
 ////    GET     ///////////////////////////////////////////////////
 app.get('/ids', async (req, res) => {
-  const correlationId = uuidv4();
-  myamqp.sendMessageToQueue(adrsProductsService,{'limit':req.query?.limit},"products.ids.read",correlationId)
-    .then(()=>{
-      myamqp.consumeMessagesFromQueue(adrsProductsService, "gateway.ids.read",correlationId)
-      .then(message => {
-        res.send(message)
-      })
-      .catch(error => {
-        console.error('Error consuming messages from queue bapzgateway :', error);
-        res.status(400).json({ data: 0 });
-      });
-    })
-    .catch((error)=>{
-      console.error('Error sending messages to queue bapzproduct :', error);
-      res.status(400).json({ data: 0 });
-    })
+  axios.get(`${adrsProductsService}/ids?letter=${req.query?.limit}`)
+  .then(resu=>{res.send(resu.data)})
+  .catch(()=>{res.status(400).json({ 'info': 'products service error response' });})
 });
 /////////////////////////////////////////////////////////////////
 
@@ -231,27 +207,9 @@ app.get('/ids', async (req, res) => {
 
 ////   POST     /////////////////////////////////////////////////
 app.post('/api/bapz/id', async (req, res) => {
-  // get elements from database
-  try {
-    if(req?.body?.id) {
-      const product = await prisma.bapz.findMany({
-        where: {
-          id: BigInt(req.body.id),
-        }
-      });
-      // deal with element
-      if (product.length === 1) {
-        const rez = getSrc(product[0].productname.split(' ').join(''),0)
-        res.status(200).json({found:"yes" ,src:rez,data:araJSON(product[0])});
-        return 
-      }
-    }
-  } catch {
-    console.log('try cathced an error.')
-  }
-
-  res.status(400).json({ data: 0 });
-  return
+  axios.post(`${adrsProductsService}/api/bapz/id`,data={'id':req.body?.id})
+  .then(resu=>{res.send(resu.data)})
+  .catch(()=>{res.status(400).json({ 'info': 'products service error response' });})
 });
 /////////////////////////////////////////////////////////////////
 
@@ -288,85 +246,9 @@ app.post('/api/bapz/product', async (req, res) => {
 
 ///////   POST     //////////////////////////////////////////////////////////
 app.post('/api/bapz/apparel', async (req, res) => {
-  // get elements from database
-  try {
-    if(req?.body?.cat) {
-      const products = await prisma.bapz.findMany({
-        where: {
-          category: req?.body?.cat,
-        }
-      })
-      prodsRes = []
-      for (const produit of products) {
-
-        prodsRes.push([produit.productname,await getSrc(produit.productname,0).slice(0,2),Number(produit.id.toString()), Number(produit.price.split('$')[1].split('.')[0]) , produit.color  ] )
-      }
-
-      res.status(200).json({ data: prodsRes });
-      return
-    }
-    else {
-      const tShirts = await prisma.bapz.findMany({
-        where: {
-          category: 't-shirts',
-        },
-        take: 2,
-      });
-      
-      const shoes = await prisma.bapz.findMany({
-        where: {
-          category: 'shoes',
-        },
-        take: 2,
-      });
-      
-      const pants = await prisma.bapz.findMany({
-        where: {
-          category: 'pants',
-        },
-        take: 2,
-      });
-      
-      const watches = await prisma.bapz.findMany({
-        where: {
-          category: 'watches',
-        },
-        take: 2,
-      });
-      
-      const bags = await prisma.bapz.findMany({
-        where: {
-          category: 'bags',
-        },
-        take: 2,
-      });
-      
-      const sweats = await prisma.bapz.findMany({
-        where: {
-          category: 'sweats',
-        },
-        take: 2,
-      });
-      
-      const products = [...tShirts, ...shoes, ...pants, ...watches, ...bags, ...sweats];
-      
-      prodsRes = []
-      for (const produit of products) {
-        prodsRes.push([produit.productname,getSrc(produit.productname,0).slice(0,2),Number(produit.id.toString()), Number(produit.price.split('$')[1].split('.')[0]) , produit.color ])
-      }
-
-      res.status(200).json({ data: prodsRes });
-      return
-    }
-
-  }
-
-  catch {
-    console.log('Error catched by try.')
-  }
-  res.status(400).json({ data: 0 });
-  return
-
+  axios.post(`${adrsProductsService}/api/bapz/apparel`,data={'cat':req.body?.cat})
+  .then(resu=>{res.send(resu.data)})
+  .catch(()=>{res.status(400).json({ 'info': 'products service error response' });})
 })
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -649,5 +531,3 @@ app.listen(PORT, () => {
 // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
-module.exports = prisma;

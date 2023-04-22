@@ -14,6 +14,8 @@ const consumeMessagesFromQueue = (adr, q, correlationId) => {
 
         ch.assertQueue(q, { durable: true });
 
+        let didResolve = 0
+
 
         ch.consume(q, msg => {
           const msgCorrId = msg.properties.headers.myH.correlationId
@@ -22,14 +24,24 @@ const consumeMessagesFromQueue = (adr, q, correlationId) => {
           // console.log('[x] - Wanted correlationId :',correlationId)
           if (msgCorrId === correlationId) {
             const time = new Date();
-            console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q : ${q}`);
+            console.log(`[x] - ${time.getSeconds()} - Consuming ${msg.content.toString('utf8')} from q:${q}`);
             resolve(msg.content);
-            ch.cancel(msg.fields.consumerTag);
+            // didResolve = 1
+            // ch.cancel(msg.fields.consumerTag);
             ch.ack(msg);
           }
-          else
-            console.log('Unhandled message!',msgCorrId)
-        }, { noAck: false });
+          else {
+            // console.log('[x] - Unhandled message :',msgCorrId)
+            // ch.cancel(msg.fields.consumerTag , (err,ok) => { if (err) { console.log('[x] - Error canceling consumption.')} ; if (ok) {console.log('[x] - Canceled consumption.')} } );
+          }
+          // resolve({'info':"couldn't consume the right message"})
+        }, { noAck: false }
+        , (err) => { if (err) {console.log(`[x] - Error consuming in q:${q}`)};});
+
+        // if (didResolve === 0) {
+        //   // resolve({'info':"couldn't consume the right message"})
+        //   console.log('DIDNT RESOLVE')
+        // }
 
         setTimeout(() => {
           conn.close();
